@@ -5,6 +5,7 @@ assert sys.version_info >= (3, 5)
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 mpl.rc('axes', labelsize=14)
 mpl.rc('xtick', labelsize=12)
@@ -16,22 +17,54 @@ from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
 
-np.random.seed(42)
-tf.random.set_seed(42)
+import pyldpc
+import myldpc
+
+# np.random.seed(42)
+# tf.random.set_seed(42)
 
 # %%
 M = 16
 M_sec = 4
 k = int(np.log2(M))
 n = 16
-TRAINING_SNR = 10  # snr = ebno * k/n
-SAMPLE_SIZE = 50000
-messages = np.random.randint(M, size=SAMPLE_SIZE)
+BOB_SNR = 10  # snr = ebno * k/n
+EVE_SNR = 7
+# messages = np.random.randint(M, size=SAMPLE_SIZE)
 
 # %%
-one_hot_encoder = OneHotEncoder(sparse=False, categories=[range(M)])
-data_oneH = one_hot_encoder.fit_transform(messages.reshape(-1, 1))
+baseGraph=np.mat([[0, -1,-1,-1, 0, 0 ,-1 ,-1 ,0 ,-1 ,-1, 0 ,1 ,0 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1, -1],
+    [22, 0 ,-1, -1, 17, -1, 0, 0 ,12 ,-1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+    [6, -1, 0, -1, 10, -1, -1, -1, 24, -1, 0, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+    [2, -1, -1, 0, 20, -1, -1, -1, 25, 0, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1, -1, -1],
+    [23, -1, -1, -1, 3, -1, -1, -1, 0, -1, 9, 11, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1, -1],
+    [24, -1, 23, 1, 17, -1, 3, -1, 10, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1],
+    [25, -1, -1, -1, 8, -1, -1, -1, 7, 18, -1, -1, 0, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1],
+    [13, 24, -1, -1, 0, -1, 8, -1, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1],
+    [7, 20, -1, 16, 22, 10, -1, -1, 23, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, 0, 0, -1, -1],
+    [11, -1, -1, -1, 19, -1, -1, -1, 13, -1, 3, 17, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1],
+    [25, -1, 8, -1, 23, 18, -1, 14, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
+    [3, -1, -1, -1, 16, -1, -1, 2, 25, 5, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0]])
+blockSize = int(27)
+infoLen=int(324)
+codeLen=int(648)
+msgLen=int(codeLen//k)
+SAMPLE_SIZE = 1000
+H=myldpc.ldpcQC(blockSize,baseGraph)
+G=pyldpc.coding_matrix(H)
 
+message_info = np.random.randint(2, size=(infoLen,SAMPLE_SIZE))
+message_encoded = myldpc.encode(G,message_info)
+messages=np.zeros((msgLen,SAMPLE_SIZE),dtype=int)
+for i in range(SAMPLE_SIZE):
+    for j in range (msgLen):
+        messages[j,i]=pyldpc.utils.bitarray2int(message_encoded[j*k:(j+1)*k,i])
+   
+# %%
+one_hot_encoder = OneHotEncoder(sparse_output=False, categories=[range(M)])
+data_oneH=np.zeros((SAMPLE_SIZE,msgLen,M),dtype=int)
+for i in range(SAMPLE_SIZE):
+    data_oneH[i,:,:]=one_hot_encoder.fit_transform(messages[:,i].reshape(-1, 1))
 
 # Generate Training Data
 # x = tf.random.uniform(shape=[SAMPLE_SIZE], minval=0, maxval=M, dtype=tf.int64)
@@ -47,15 +80,15 @@ def snr_to_noise(snrdb):
 
 
 # %%
-noise_std = snr_to_noise(TRAINING_SNR)
-noise_std_eve = snr_to_noise(7)
+noise_std_bob = snr_to_noise(BOB_SNR)
+noise_std_eve = snr_to_noise(EVE_SNR)
 
 # custom functions / layers without weights
 norm_layer = keras.layers.Lambda(lambda x: tf.divide(x, tf.sqrt(2 * tf.reduce_mean(tf.square(x)))))
 shape_layer = keras.layers.Lambda(lambda x: tf.reshape(x, shape=[-1, 2, n]))
 shape_layer2 = keras.layers.Lambda(lambda x: tf.reshape(x, shape=[-1, 2 * n]))
 channel_layer = keras.layers.Lambda(lambda x:
-                                    tf.add(x, tf.random.normal(tf.shape(x), mean=0.0, stddev=noise_std)))
+                                    tf.add(x, tf.random.normal(tf.shape(x), mean=0.0, stddev=noise_std_bob)))
 channel_layer_eve = keras.layers.Lambda(lambda x:
                                         tf.add(x, tf.random.normal(tf.shape(x), mean=0.0, stddev=noise_std_eve)))
 
@@ -105,15 +138,14 @@ def random_batch(X, batch_size=32):
 def test_encoding(M=16, n=1):
     inp = np.eye(M, dtype=int)
     coding = encoder.predict(inp)
-    for i in range(M):
-        fig = plt.figure(figsize=(4, 4))
-        plt.plot(coding[:, 0, i], coding[:, 1, i], "b.")
-        plt.xlabel("$x_1$", fontsize=18)
-        plt.ylabel("$x_2$", fontsize=18, rotation=0)
-        plt.grid(True)
-        plt.gca().set_ylim(-2, 2)
-        plt.gca().set_xlim(-2, 2)
-        plt.show()
+    fig = plt.figure(figsize=(4, 4))
+    plt.plot(coding[:, 0], coding[:, 1], "b.")
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.ylabel("$x_2$", fontsize=18, rotation=0)
+    plt.grid(True)
+    plt.gca().set_ylim(-2, 2)
+    plt.gca().set_xlim(-2, 2)
+    plt.show()
 
 
 # %%
@@ -132,8 +164,8 @@ def test_noisy_codeword(data):
 
 # %%
 n_epochs = 5
-batch_size = 200
-n_steps = len(data_oneH) // batch_size
+batch_size = min(200,SAMPLE_SIZE//100)
+n_steps = SAMPLE_SIZE // batch_size
 optimizer = keras.optimizers.legacy.Nadam(learning_rate=0.005)
 loss_fn = keras.losses.categorical_crossentropy
 mean_loss = keras.metrics.Mean()
@@ -158,23 +190,40 @@ def plot_batch_loss(epoch, mean_loss, X_batch, y_pred):
 def train_Bob(n_epochs=5, n_steps=20, plot_encoding=True, only_decoder=False):
     for epoch in range(1, n_epochs + 1):
         print("Training Bob in Epoch {}/{}".format(epoch, n_epochs))
-        X_batch = random_batch(data_oneH, batch_size)
+        # X_batch = random_batch(data_oneH, batch_size)
+        idx = np.random.randint(SAMPLE_SIZE, size=batch_size)
+        X_info = message_info[:, idx]
+        X_batch=data_oneH[idx,:,:]
         for step in range(1, n_steps + 1):
-            X_batch = random_batch(data_oneH, batch_size)
-            # X_batch  = dataset.batch(batch_size)
+            idx = np.random.randint(SAMPLE_SIZE, size=batch_size)
+            X_info = message_info[:, idx]
+            Y_info = np.zeros((infoLen, batch_size))
+            X_batch=data_oneH[idx,:,:]
             with tf.GradientTape() as tape:
-                y_pred = autoencoder_bob(X_batch, training=True)
-                main_loss = tf.reduce_mean(loss_fn(X_batch, y_pred))
+                for i in range(batch_size):
+                    x_info=X_info[:,i]
+                    y_batch = autoencoder_bob(X_batch[i,:,:], training=True)
+                    y_msgs = [np.argmax(i) for i in y_batch]
+                    y_encoded = np.zeros(shape=(codeLen,), dtype=int)
+                    for j in range(msgLen):
+                        y_encoded[j*k:(j+1)*k]=pyldpc.utils.int2bitarray(y_msgs[j],k)
+                    y_bpsk=y_encoded*(-40)+20
+                    y_info=myldpc.decode(H,G,y_bpsk,BOB_SNR)
+                    Y_info[:,i]=y_info
+                x_loss=X_info.astype(float)
+                y_loss=Y_info.astype(float)
+                fn=loss_fn(x_loss,y_loss)
+                main_loss = tf.reduce_mean(fn)
                 loss = main_loss
-            if only_decoder:
-                gradients = tape.gradient(loss, decoder_bob.trainable_variables)
-                optimizer.apply_gradients(zip(gradients, decoder_bob.trainable_variables))
-            else:
-                gradients = tape.gradient(loss, autoencoder_bob.trainable_variables)
-                optimizer.apply_gradients(zip(gradients, autoencoder_bob.trainable_variables))
+                if only_decoder:
+                    gradients = tape.gradient(loss, decoder_bob.trainable_variables)
+                    optimizer.apply_gradients(zip(gradients, decoder_bob.trainable_variables))
+                else:
+                    gradients = tape.gradient(loss, autoencoder_bob.trainable_variables)
+                    optimizer.apply_gradients(zip(gradients, autoencoder_bob.trainable_variables))
             mean_loss(loss)
-            plot_loss(step, epoch, mean_loss, X_batch, y_pred, plot_encoding)
-        plot_batch_loss(epoch, mean_loss, X_batch, y_pred)
+            plot_loss(step, epoch, mean_loss, X_info, Y_info, plot_encoding)
+        plot_batch_loss(epoch, mean_loss, X_info, Y_info)
 
 
 # %%
@@ -252,12 +301,14 @@ def train_Secure(kmeans_labels, n_epochs=5, iterations=20, alpha=0.7, plot_encod
         plot_batch_loss(epoch, mean_loss, X_batch, y_pred_bob)
 
 
-# %%
-# test msg sequence for normal encoding
-N_test = 3*SAMPLE_SIZE
-test_msg = np.random.randint(M, size=N_test)
-one_hot_encoder = OneHotEncoder(sparse=False, categories=[range(M)])
-data_oh_normal = one_hot_encoder.fit_transform(test_msg.reshape(-1, 1))
+# # %%
+# # test msg sequence for normal encoding
+# N_test = 3*SAMPLE_SIZE
+# # test_msg = np.random.randint(M, size=N_test)
+# test_msg_bit = np.random.randint(2, size=N_test * k)
+# test_msg = myldpc.encode(G,test_msg_bit)
+# one_hot_encoder = OneHotEncoder(sparse=False, categories=[range(M)])
+# data_oh_normal = one_hot_encoder.fit_transform(test_msg.reshape(-1, 1))
 
 
 # %%
@@ -328,7 +379,7 @@ def Test_secure_AE(coded_data, code_mat, real_data):
 
     for db in range(len(snr_range)):
         noise_std = snr_to_noise(snr_range[db])
-        noise_std_eve = snr_to_noise(7)
+        noise_std_eve = snr_to_noise(EVE_SNR)
         code_word = encoder.predict(coded_data)
         rcvd_word = code_word + tf.random.normal(tf.shape(code_word), mean=0.0, stddev=noise_std)
         rcvd_word_eve = rcvd_word + \
