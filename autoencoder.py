@@ -3,7 +3,7 @@ from keras import layers
 import numpy as np
 import matplotlib.pyplot as plt
 
-def init_autoencoder(Snr,innerLen,outerLen,learning_rate=0.01):
+def init_autoencoder(noise_sigma,innerLen,outerLen,learning_rate=0.01):
     #初始化自动编码器
     encoder_input = layers.InputLayer(input_shape=(innerLen,))
     encoder_output1 = layers.Dense(innerLen)
@@ -15,7 +15,7 @@ def init_autoencoder(Snr,innerLen,outerLen,learning_rate=0.01):
     encoder=keras.models.Sequential([encoder_input,encoder_output1,encoder_output2,encoder_output3,
                                      encoder_output4,encoder_output5,encoder_output6,encoder_output6])
     #信道噪声
-    channel=layers.GaussianNoise(Snr)
+    channel=layers.GaussianNoise(noise_sigma)
    
     # 解码器
     decoder_input = layers.InputLayer(input_shape=(outerLen,))
@@ -49,6 +49,7 @@ def train_autoencoder(nEpochs,BatchSize,learning_rate,lr_scheduler,SampleData,au
         # 在每个epoch开始时初始化损失值
         epoch_loss = 0.0
         # 更新学习率
+        learning_rate=keras.backend.get_value(autoencoder.optimizer.learning_rate)
         learning_rate = lr_scheduler(epoch,learning_rate)
         keras.backend.set_value(autoencoder.optimizer.learning_rate, learning_rate)
 
@@ -61,7 +62,7 @@ def train_autoencoder(nEpochs,BatchSize,learning_rate,lr_scheduler,SampleData,au
             loss = autoencoder.train_on_batch(x_batch, x_batch)
             
             # 累加当前批次的损失值到epoch_loss
-            epoch_loss += loss
+            epoch_loss += loss[0]
         
         # 计算平均损失值
         avg_loss = epoch_loss / (len(SampleData) // BatchSize)
@@ -74,11 +75,9 @@ def train_autoencoder(nEpochs,BatchSize,learning_rate,lr_scheduler,SampleData,au
 
 def show_losses(nEpochs,avg_losses):
     fig = plt.figure(figsize=(18, 18))
-    plt.plot(nEpochs, avg_losses, "b.")
+    plt.plot(np.arange(1,nEpochs+1), avg_losses, "b.")
     plt.xlabel("$x_1$", fontsize=18)
     plt.ylabel("$x_2$", fontsize=18, rotation=0)
     plt.grid(True)
-    plt.gca().set_ylim(-2, 2)
-    plt.gca().set_xlim(-2, 2)
     plt.show()
     return fig

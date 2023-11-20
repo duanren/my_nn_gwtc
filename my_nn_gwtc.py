@@ -32,6 +32,8 @@ print('ldpc init done.')
 #初始化Bob和Eve的snr
 BobSnr=10
 EveSnr=7
+Bob_noise_sigma=utils.snr_to_noise(BobSnr)
+Eve_noise_sigma=utils.snr_to_noise(EveSnr)
 #初始化模型参数
 innerLen=24
 modLen=4
@@ -39,21 +41,21 @@ outerLen=innerLen // modLen
 learning_rate=0.01
 
 #检测是否已训练模型
-Bob_model_path_1="Bob_autoencoder_1.h5"
-Eve_model_path_1="Eve_autoencoder_1.h5"
+Bob_model_path_1="Bob_autoencoder_1.keras"
+Eve_model_path_1="Eve_autoencoder_1.keras"
 Bob_trained_1=False
 Eve_trained_1=False
 if os.path.exists(Bob_model_path_1):
     Bob_autoencoder=keras.models.load_model(Bob_model_path_1)
     Bob_trained_1=True
 else:
-    Bob_autoencoder=autoencoder.init_autoencoder(BobSnr,innerLen,outerLen)
+    Bob_autoencoder=autoencoder.init_autoencoder(Bob_noise_sigma,innerLen,outerLen)
 
 if os.path.exists(Eve_model_path_1):
     Eve_autoencoder=keras.models.load_model(Eve_model_path_1)
     Eve_trained_1=True
 else:
-    Eve_autoencoder=autoencoder.init_autoencoder(EveSnr,innerLen,outerLen)  
+    Eve_autoencoder=autoencoder.init_autoencoder(Eve_noise_sigma,innerLen,outerLen)  
 
 print('autoencoder init done.')
 # 定义学习率调度器
@@ -68,12 +70,12 @@ lr_callback = keras.callbacks.LearningRateScheduler(lr_scheduler)
 
 #第一轮训练
 #生成训练集
-SampleSize=1024
+SampleSize=102400
 SampleData=np.random.randint(0,2,(SampleSize,innerLen))
 
 #训练
-nEpochs=5
-BatchSize=24
+nEpochs=500
+BatchSize=120
 if Bob_trained_1==False:
     print('Bob_autoencoder_1 is training...')
     Bob_avg_losses=autoencoder.train_autoencoder(nEpochs,BatchSize,learning_rate,lr_scheduler,SampleData,Bob_autoencoder)
@@ -83,7 +85,7 @@ if Bob_trained_1==False:
     #保存损失函数图像
     Bob_loss_fig.savefig('Bob_loss_1.png')
     #保存模型
-    Bob_autoencoder.save('Bob_autoencoder_1.h5')
+    Bob_autoencoder.save(filepath='Bob_autoencoder_1.keras',save_format='keras')
     
 if Eve_trained_1==False:
     print('Eve_autoencoder_1 is training...')
@@ -94,7 +96,7 @@ if Eve_trained_1==False:
     #保存损失函数图像
     Eve_loss_fig.savefig('Eve_loss_1.png')
     #保存模型
-    Eve_autoencoder.save('Eve_autoencoder_1.h5')
+    Eve_autoencoder.save(filepath='Eve_autoencoder_1.keras',save_format='keras')
 
 #第一轮SER测试
 #生成测试集
@@ -102,10 +104,10 @@ TestSize=SampleSize // 10
 TestData=np.random.randint(0,2,(TestSize,innerLen))
 Bob_Predict=Bob_autoencoder.predict(TestData)
 Eve_Predict=Eve_autoencoder.predict(TestData)
-Bob_Data=utils.hard_decide_array(Bob_Predict)
-Eve_Data=utils.hard_decide_array(Eve_Predict)
-Bob_Ser=np.sum(np.abs(Bob_Data-TestData))/TestSize/innerLen
-Eve_Ser=np.sum(np.abs(Eve_Data-TestData))/TestSize/innerLen
+Bob_Data=np.where(Bob_Predict>=0.5,1,0)
+Eve_Data=np.where(Eve_Predict>=0.5,1,0)
+Bob_Ser=np.sum(np.abs(np.subtract(Bob_Data,TestData)))/TestSize/innerLen
+Eve_Ser=np.sum(np.abs(np.subtract(Eve_Data,TestData)))/TestSize/innerLen
 
 print('Bob_Ser_1=',Bob_Ser)
 print('Eve_Ser_1=',Eve_Ser)
