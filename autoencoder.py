@@ -41,7 +41,7 @@ def init_autoencoder(noise_sigma, innerLen, outerLen, learning_rate=0.01):
     # 编译自动编码器
     autoencoder.compile(optimizer=optimizer, loss=loss_fn)
 
-    return autoencoder
+    return autoencoder,encoder,decoder
 
 
 def train_autoencoder(nEpochs, BatchSize, learning_rate, lr_scheduler, SampleData, autoencoder):
@@ -79,10 +79,10 @@ def train_autoencoder(nEpochs, BatchSize, learning_rate, lr_scheduler, SampleDat
 
 
 def show_losses(nEpochs, avg_losses):
-    fig = plt.figure(figsize=(18, 18))
+    fig = plt.figure(figsize=(8, 5))
     plt.plot(np.arange(1, nEpochs+1), avg_losses, "b.")
-    plt.xlabel("$x_1$", fontsize=18)
-    plt.ylabel("$x_2$", fontsize=18, rotation=0)
+    plt.xlabel("nEpochs", fontsize=14)
+    plt.ylabel("avg_losses", fontsize=14, rotation=90)
     plt.grid(True)
     plt.show()
     return fig

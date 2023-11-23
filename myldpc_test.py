@@ -23,8 +23,7 @@ G=pyldpc.coding_matrix(H)
     
 message_info = np.random.randint(2, size=infoLen)
 message_encoded = myldpc.encode(G,message_info)
-message_bpsk=message_encoded*(-40)+20
-decoded=myldpc.decode_internal(H,message_bpsk,10,maxiter=100)
-info=myldpc.get_message(G,decoded)
+message_bpsk=message_encoded*(-40)+20.0
+info = myldpc.decode(H,G,message_bpsk,10,maxiter=100)
 
 assert np.array_equal(message_info,info)

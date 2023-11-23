@@ -20,8 +20,8 @@ def encode(G,data):
     x = pyldpc.utils.binaryproduct(G, data)
     return x
 
-def decode(H,G,code,snr,maxiter=1000):
-    decoded=decode_internal(H,code,snr,maxiter)
+def decode(H,G,code,snr_db,maxiter=1000):
+    decoded=decode_internal(H,code,snr_db,maxiter)
     info=get_message(G,decoded)
     return info
 

@@ -5,5 +5,10 @@ def snr_to_noise(snrdb):
     noise_std = 1 / np.sqrt(2 * snr)  
     return noise_std
 
-
+def llr(x):
+    if x>1-1e-8:
+        x=1-1e-8
+    elif x<1e-8:
+        x=1e-8
+    return np.log((1-x)/x)
 
