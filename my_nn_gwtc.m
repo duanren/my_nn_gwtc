@@ -31,7 +31,7 @@ Eve_train_snr = 3;
 innerLen = 24;
 modLen = 4;
 outerLen = innerLen*2/modLen;
-nEpochs = 50;
+nEpochs = 500;
 BatchSize = 120;
 
 % 创建学习速率调度器
@@ -89,7 +89,7 @@ Eve_autoencoderLayers = [...
 
 % 第一轮训练
 % 生成训练集
-SampleSize = 1024;
+SampleSize = 102400;
 SampleData = randi([0,1],innerLen,SampleSize);
 
 % 设置训练选项
@@ -101,16 +101,18 @@ options = trainingOptions('adam', ...
     'MaxEpochs', nEpochs, ...
     'MiniBatchSize', BatchSize, ...
     'Plots', 'training-progress',...
-    'ExecutionEnvironment','gpu',...
+    'ExecutionEnvironment','auto',...
     'OutputFcn', outputFunction);
 
 % 训练
 Bob_autoencoder=trainNetwork(SampleData,SampleData,Bob_autoencoderLayers,options);
+save('Bob_autoencoder.mat','Bob_autoencoder');
 Eve_autoencoder=trainNetwork(SampleData,SampleData,Eve_autoencoderLayers,options);
+save('Eve_autoencoder.mat','Eve_autoencoder');
 
 %测试
-TestSize=10;
-TestSnr=0:5:15;
+TestSize=SampleSize/10;
+TestSnr=0:1:15;
 Bob_BER = zeros(1,length(TestSnr));
 Eve_BER = zeros(1,length(TestSnr));
 Bob_SER = zeros(1,length(TestSnr));
@@ -188,6 +190,7 @@ xlabel('SNR');
 ylabel('MSE');
 legend('Bob','Eve');
 grid on
+savefig('MSE.fig');
 
 figure;
 semilogy(TestSnr,Bob_SER,TestSnr,Eve_SER);
@@ -196,6 +199,7 @@ xlabel('SNR');
 ylabel('SER');
 legend('Bob','Eve');
 grid on
+savefig('SER.fig');
 
 figure;
 semilogy(TestSnr,Bob_BER,TestSnr,Eve_BER);
@@ -204,3 +208,4 @@ xlabel('SNR');
 ylabel('BER');
 legend('Bob','Eve');
 grid on
+savefig('BER.fig');
