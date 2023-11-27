@@ -31,7 +31,7 @@ Eve_train_snr = 3;
 innerLen = 24;
 modLen = 4;
 outerLen = innerLen*2/modLen;
-nEpochs = 500;
+nEpochs = 200;
 BatchSize = 120;
 
 % 创建学习速率调度器
@@ -111,7 +111,7 @@ Eve_autoencoder=trainNetwork(SampleData,SampleData,Eve_autoencoderLayers,options
 save('Eve_autoencoder.mat','Eve_autoencoder');
 
 %测试
-TestSize=SampleSize/10;
+TestSize=10;
 TestSnr=0:1:15;
 Bob_BER = zeros(1,length(TestSnr));
 Eve_BER = zeros(1,length(TestSnr));
