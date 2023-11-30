@@ -1,6 +1,6 @@
 import pyldpc
 import numpy as np
-import tensorflow as tf 
+import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 import os
@@ -44,18 +44,18 @@ print('ldpc init done.')
 
 # 初始化Bob和Eve的snr
 Bob_train_snr = 10
-Eve_train_snr = 7
+Eve_train_snr = 3
 Bob_train_sigma = utils.snr_to_noise(Bob_train_snr)
 Eve_train_sigma = utils.snr_to_noise(Eve_train_snr)
 Bob_channel = layers.Lambda(lambda x:
-                                    tf.add(x, tf.random.normal(tf.shape(x), mean=0.0, stddev=Bob_train_sigma)))
+                            tf.add(x, tf.random.normal(tf.shape(x), mean=0.0, stddev=Bob_train_sigma)))
 Eve_channel = layers.Lambda(lambda x:
-                                    tf.add(x, tf.random.normal(tf.shape(x), mean=0.0, stddev=Eve_train_sigma)))
+                            tf.add(x, tf.random.normal(tf.shape(x), mean=0.0, stddev=Eve_train_sigma)))
 # 初始化模型参数
 innerLen = 24
 modLen = 4
 outerLen = innerLen * 2 // modLen
-learning_rate = 0.01
+learning_rate = 0.1
 
 # 检测是否已训练模型
 Alice_encoder_model_path_1 = "Alice_encoder_1.keras"
@@ -68,7 +68,7 @@ trained_1 = False
 
 if os.path.exists(Alice_encoder_model_path_1):
     Alice_trained_1 = True
-    Alice_encoder = keras.models.load_model(Alice_encoder_model_path_1) 
+    Alice_encoder = keras.models.load_model(Alice_encoder_model_path_1)
 else:
     encoder_input = layers.InputLayer(input_shape=(innerLen,))
     encoder_output1 = layers.Dense(innerLen * 2)
@@ -78,12 +78,12 @@ else:
     encoder_output5 = layers.ReLU()
     encoder_output6 = layers.BatchNormalization()
     Alice_encoder = keras.models.Sequential([encoder_input, encoder_output1, encoder_output2,
-                                      encoder_output3, encoder_output4, encoder_output5, encoder_output6])
+                                             encoder_output3, encoder_output4, encoder_output5, encoder_output6])
 
 if os.path.exists(Bob_decoder_model_path_1):
     Bob_trained_1 = True
     Bob_decoder = keras.models.load_model(Bob_decoder_model_path_1)
-else:   
+else:
     decoder_input = layers.InputLayer(input_shape=(outerLen,))
     decoder_output1 = layers.Dense(innerLen * 2)
     decoder_output2 = layers.ReLU()
@@ -93,12 +93,12 @@ else:
     decoder_output6 = layers.BatchNormalization()
     decoder_output7 = layers.Dense(innerLen, activation="sigmoid")
     Bob_decoder = keras.models.Sequential([decoder_input, decoder_output1, decoder_output2,
-                                      decoder_output3, decoder_output4, decoder_output5, decoder_output6, decoder_output7])
-    
+                                           decoder_output3, decoder_output4, decoder_output5, decoder_output6, decoder_output7])
+
 if os.path.exists(Eve_decoder_model_path_1):
     Eve_trained_1 = True
     Eve_decoder = keras.models.load_model(Eve_decoder_model_path_1)
-else:   
+else:
     decoder_input = layers.InputLayer(input_shape=(outerLen,))
     decoder_output1 = layers.Dense(outerLen)
     decoder_output2 = layers.ReLU()
@@ -108,13 +108,15 @@ else:
     decoder_output6 = layers.BatchNormalization()
     decoder_output7 = layers.Dense(innerLen, activation="sigmoid")
     Eve_decoder = keras.models.Sequential([decoder_input, decoder_output1, decoder_output2,
-                                      decoder_output3, decoder_output4, decoder_output5, decoder_output6, decoder_output7])
+                                           decoder_output3, decoder_output4, decoder_output5, decoder_output6, decoder_output7])
 
 if (Alice_trained_1 and Bob_trained_1 and Eve_trained_1):
     trained_1 = True
  # 构建自动编码器模型
-Bob_autoencoder = keras.models.Sequential([Alice_encoder, Bob_channel, Bob_decoder])
-Eve_autoencoder = keras.models.Sequential([Alice_encoder, Bob_channel, Eve_channel, Eve_decoder])
+Bob_autoencoder = keras.models.Sequential(
+    [Alice_encoder, Bob_channel, Bob_decoder])
+Eve_autoencoder = keras.models.Sequential(
+    [Alice_encoder, Eve_channel, Eve_decoder])
 
 # 定义损失函数和优化器
 loss_fn = keras.losses.MeanSquaredError()
@@ -123,12 +125,14 @@ optimizer = keras.optimizers.legacy.Adam(learning_rate)
 # 编译自动编码器
 Bob_autoencoder.compile(optimizer=optimizer, loss=loss_fn)
 Eve_autoencoder.compile(optimizer=optimizer, loss=loss_fn)
-    
+
 print('autoencoder init done.')
 # 定义学习率调度器
+
+
 def lr_scheduler(epoch, lr):
     if (epoch + 1) % 50 == 0:
-        return lr * 0.5  # 每50个epoch学习率减半
+        return lr * 0.5  # 每250个epoch学习率减半
     else:
         return lr
 
@@ -138,7 +142,7 @@ lr_callback = keras.callbacks.LearningRateScheduler(lr_scheduler)
 
 # 第一轮训练
 # 生成训练集
-SampleSize = 102400
+SampleSize = 10240
 SampleData = np.random.randint(0, 2, (SampleSize, innerLen))
 
 # 训练
@@ -186,8 +190,9 @@ if trained_1 == False:
         Eve_avg_losses[epoch] = Eve_avg_loss
 
         # 输出当前epoch的信息
-        print(f'Epoch {epoch+1}/{nEpochs} - Bob Loss: {Bob_avg_loss:.4f} Eve Loss: {Eve_avg_loss:.4f}')
-        
+        print(
+            f'Epoch {epoch+1}/{nEpochs} - Bob Loss: {Bob_avg_loss:.4f} Eve Loss: {Eve_avg_loss:.4f}')
+
     print('autoencoder_1 is trained.')
     # 保存模型
     Alice_encoder.save(
@@ -203,64 +208,69 @@ if trained_1 == False:
     plt.xlabel("nEpochs", fontsize=14)
     plt.ylabel("avg_losses", fontsize=14, rotation=90)
     plt.legend(['Bob_avg_losses', 'Eve_avg_losses'],
-           prop={'size': 14}, loc='upper right')
+               prop={'size': 14}, loc='upper right')
     plt.grid(True)
     plt.show()
-   
+
     # 保存损失函数图像
     loss_fig.savefig('loss_1.png')
 
 # 第一轮测试
 # 生成测试集
-TestSize = 10 
-snr_range = np.linspace(0, 15, 5)
-Bob_BER= np.zeros(len(snr_range))
+TestSize = SampleSize // 10
+snr_range = np.linspace(-5, -1)
+Bob_BER = np.zeros(len(snr_range))
 Eve_BER = np.zeros(len(snr_range))
-Bob_SER= np.zeros(len(snr_range))
+Bob_SER = np.zeros(len(snr_range))
 Eve_SER = np.zeros(len(snr_range))
-Bob_MSE= np.zeros(len(snr_range))
+Bob_MSE = np.zeros(len(snr_range))
 Eve_MSE = np.zeros(len(snr_range))
 for i in range(len(snr_range)):
     Bob_test_sigma = utils.snr_to_noise(snr_range[i])
-    Eve_test_sigma = utils.snr_to_noise(Eve_train_snr)
+    Eve_test_sigma = utils.snr_to_noise(snr_range[i]-7)
     for j in range(TestSize):
         Info = np.random.randint(0, 2, infoLen)
-        TestData = myldpc.encode(G, Info).reshape(-1,innerLen)
-        Alice_code= Alice_encoder.predict(TestData)
-        Bob_code =  Alice_code + \
-                tf.random.normal(tf.shape(Alice_code), mean=0.0, stddev=Bob_test_sigma)
-        Eve_code = Bob_code + \
-                tf.random.normal(tf.shape(Alice_code), mean=0.0, stddev=Eve_test_sigma)
+        TestData = myldpc.encode(G, Info).reshape(-1, innerLen)
+        Alice_code = Alice_encoder.predict(TestData)
+        Bob_code = Alice_code + \
+            tf.random.normal(tf.shape(Alice_code), mean=0.0,
+                             stddev=Bob_test_sigma)
+        Eve_code = Alice_code + \
+            tf.random.normal(tf.shape(Alice_code), mean=0.0,
+                             stddev=Eve_test_sigma)
         Bob_Predict = Bob_decoder.predict(Bob_code)
-        Eve_Predict = Eve_decoder.predict(Eve_code)       
-        
+        Eve_Predict = Eve_decoder.predict(Eve_code)
+
         Bob_mse = np.sum(
             np.square(np.abs(np.subtract(Bob_Predict, TestData))))/TestSize/codeLen
         Eve_mse = np.sum(
             np.square(np.abs(np.subtract(Eve_Predict, TestData))))/TestSize/codeLen
         Bob_MSE[i] += Bob_mse
         Eve_MSE[i] += Eve_mse
-    
+
         Bob_Data = np.where(Bob_Predict >= 0.5, 1, 0)
         Eve_Data = np.where(Eve_Predict >= 0.5, 1, 0)
-        Bob_ser = np.sum(np.abs(np.subtract(Bob_Data, TestData)))/TestSize/codeLen
-        Eve_ser = np.sum(np.abs(np.subtract(Eve_Data, TestData)))/TestSize/codeLen
+        Bob_ser = np.sum(
+            np.abs(np.subtract(Bob_Data, TestData)))/TestSize/codeLen
+        Eve_ser = np.sum(
+            np.abs(np.subtract(Eve_Data, TestData)))/TestSize/codeLen
         Bob_SER[i] += Bob_ser
         Eve_SER[i] += Eve_ser
-        
-        Bob_llr=Bob_Predict.flatten().astype(np.float64)
+
+        Bob_llr = Bob_Predict.flatten().astype(np.float64)
         for k in range(len(Bob_llr)):
-            Bob_llr[k]=utils.llr(Bob_llr[k])
-        Bob_Info = myldpc.decode(H, G, Bob_llr, snr_range[i],maxiter=1000)
-        Eve_llr=Eve_Predict.flatten().astype(np.float64)
+            Bob_llr[k] = utils.llr(Bob_llr[k])
+        Bob_Info = myldpc.decode(H, G, Bob_llr, snr_range[i], maxiter=1000)
+        Eve_llr = Eve_Predict.flatten().astype(np.float64)
         for k in range(len(Bob_llr)):
-            Eve_llr[k]=utils.llr(Eve_llr[k])
-        Eve_Info = myldpc.decode(H, G, Eve_llr, snr_range[i]-Eve_train_snr,maxiter=1000)
-        Bob_ber=np.sum(np.abs(np.subtract(Bob_Info, Info)))/TestSize/infoLen
-        Eve_ber=np.sum(np.abs(np.subtract(Eve_Info, Info)))/TestSize/infoLen
+            Eve_llr[k] = utils.llr(Eve_llr[k])
+        Eve_Info = myldpc.decode(
+            H, G, Eve_llr, snr_range[i]-Eve_train_snr, maxiter=1000)
+        Bob_ber = np.sum(np.abs(np.subtract(Bob_Info, Info)))/TestSize/infoLen
+        Eve_ber = np.sum(np.abs(np.subtract(Eve_Info, Info)))/TestSize/infoLen
         Bob_BER[i] += Bob_ber
         Eve_BER[i] += Eve_ber
-    
+
 MSE_fig = plt.figure(figsize=(10, 5))
 plt.semilogy(snr_range, Bob_MSE, "o-")
 plt.semilogy(snr_range, Eve_MSE, "s-")
@@ -270,8 +280,8 @@ plt.legend(['Bob_MSE', 'Eve_MSE'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-MSE_fig.savefig('MSE_1.png')  
-    
+MSE_fig.savefig('MSE_1.png')
+
 SER_fig = plt.figure(figsize=(10, 5))
 plt.semilogy(snr_range, Bob_SER, "o-")
 plt.semilogy(snr_range, Eve_SER, "s-")
@@ -281,7 +291,7 @@ plt.legend(['Bob_SER', 'Eve_SER'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-SER_fig.savefig('SER_1.png')  
+SER_fig.savefig('SER_1.png')
 
 BER_fig = plt.figure(figsize=(10, 5))
 plt.semilogy(snr_range, Bob_BER, "o-")
@@ -292,6 +302,6 @@ plt.legend(['Bob_BER', 'Eve_BER'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-BER_fig.savefig('BER_1.png')  
+BER_fig.savefig('BER_1.png')
 
 # 物理层安全训练
