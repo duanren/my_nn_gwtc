@@ -375,16 +375,16 @@ def Test_secure_AE(coded_data, code_mat, real_data):
 
 
 # %%
-train_Bob(n_epochs, n_steps, False, False)
+# train_Bob(n_epochs, n_steps, False, False)
 # reduced epochs to match accuracy of both
-train_Eve(n_epochs-1, n_steps, False)
+# train_Eve(n_epochs-1, n_steps, False)
 # bber_data_bob, bber_data_eve = Test_AE(data_oh_normal) # Taking test data for comparison
 
 # Initlizing kmeans for the security procedure
 kmeans = init_kmeans(M, M_sec, n)
-train_Secure(kmeans.labels_, n_epochs-3, n_steps, 0.3, False)
-train_Bob(n_epochs-2, n_steps, False, True)
-train_Eve(n_epochs-3, n_steps, False)
+# train_Secure(kmeans.labels_, n_epochs-3, n_steps, 0.3, False)
+# train_Bob(n_epochs-2, n_steps, False, True)
+# train_Eve(n_epochs-3, n_steps, False)
 
 # test msg sequence for secure encoding
 N_test_sec = 150000
