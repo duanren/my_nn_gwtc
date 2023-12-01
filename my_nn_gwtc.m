@@ -1,3 +1,4 @@
+%%
 clc,clear,close all;
 rng('shuffle');
 
@@ -111,6 +112,8 @@ save('Bob_autoencoder.mat','Bob_autoencoder');
 Eve_autoencoder=trainNetwork(SampleData,SampleData,Eve_autoencoderLayers,options);
 save('Eve_autoencoder.mat','Eve_autoencoder');
 
+
+%%
 %测试
 load('Bob_autoencoder.mat');
 load('Eve_autoencoder.mat');
@@ -122,6 +125,7 @@ Bob_SER = zeros(1,length(TestSnr));
 Eve_SER = zeros(1,length(TestSnr));
 Bob_MSE = zeros(1,length(TestSnr));
 Eve_MSE = zeros(1,length(TestSnr));
+delta=1e-8;
 
 for i=1:length(TestSnr)
     snr=TestSnr(i);
@@ -160,18 +164,18 @@ for i=1:length(TestSnr)
         Bob_llr=Bob_predict;
         Eve_llr=Eve_predict;
         for k=1:length(Bob_llr)
-            if Bob_llr(k)<1e-8
-                Bob_llr(k)=1e-8;
-            elseif Bob_llr(k)>1-1e-8
-                Bob_llr(k)=1-1e-8;
+            if Bob_llr(k)<delta
+                Bob_llr(k)=delta;
+            elseif Bob_llr(k)>1-delta
+                Bob_llr(k)=1-delta;
             end
             Bob_llr(k)=log((1-Bob_llr(k))/Bob_llr(k));
         end
         for k=1:length(Eve_llr)
-            if Eve_llr(k)<1e-8
-                Eve_llr(k)=1e-8;
-            elseif Eve_llr(k)>1-1e-8
-                Eve_llr(k)=1-1e-8;
+            if Eve_llr(k)<delta
+                Eve_llr(k)=delta;
+            elseif Eve_llr(k)>1-delta
+                Eve_llr(k)=1-delta;
             end
             Eve_llr(k)=log((1-Eve_llr(k))/Eve_llr(k));
         end
@@ -213,6 +217,7 @@ legend('Bob','Eve');
 grid on
 savefig('BER.fig');
 
+%%
 %TODO: KMEANS
 %随机划分一个kmeans.cluster 等大小？
 kmeans_labels = [1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4];
