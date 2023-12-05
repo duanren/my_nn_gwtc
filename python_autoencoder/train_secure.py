@@ -63,11 +63,10 @@ Eve_autoencoder.compile(optimizer=optimizer, loss=loss_fn)
 print('autoencoder init done.')
 
 
-def init_kmeans(innerLen=24, modLen=4, satellites=4):
+def init_kmeans(innerLen=24, n=16, satellites=4):
     '''Initializes equal sized clusters with the whole message set'''
     # input:16*innerLen X:16*1(complex)
 
-    n = 2**modLen
     inp = np.zeros(n, innerLen)
     unit_codewords = Alice_encoder.predict(inp)
     X = np.mean(unit_codewords)
@@ -82,9 +81,8 @@ def init_kmeans(innerLen=24, modLen=4, satellites=4):
     return kmeans
 
 
-def generate_mat(kmeans_labels, satellites=4, modLen=4):
+def generate_mat(kmeans_labels, satellites=4, n=16):
     '''Generates the matrix for equalization of the input distribution on Eves side'''
-    n = 2**modLen
     gen_matrix = np.zeros((n, n))
     for j in range(satellites):
         for i in range(n):
@@ -98,8 +96,9 @@ def generate_mat(kmeans_labels, satellites=4, modLen=4):
 
 # 初始化k聚类
 satellites = 4
-kmeans = init_kmeans(innerLen, modLen, satellites)
-generator_matrix = generate_mat(kmeans.labels_, modLen, innerLen)
+n = 2**modLen
+kmeans = init_kmeans(innerLen, n, satellites)
+generator_matrix = generate_mat(kmeans.labels_, n, innerLen)
 
 # 物理层安全训练
 # 生成训练集
