@@ -382,7 +382,7 @@ def Test_secure_AE(coded_data, code_mat, real_data):
 
 # Initlizing kmeans for the security procedure
 kmeans = init_kmeans(M, M_sec, n)
-# train_Secure(kmeans.labels_, n_epochs-3, n_steps, 0.3, False)
+train_Secure(kmeans.labels_, n_epochs-3, n_steps, 0.3, False)
 # train_Bob(n_epochs-2, n_steps, False, True)
 # train_Eve(n_epochs-3, n_steps, False)
 
