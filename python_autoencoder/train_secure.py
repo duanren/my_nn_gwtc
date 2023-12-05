@@ -10,9 +10,9 @@ from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
 # 加载已训练模型
-Alice_encoder_model_path_1 = "Alice_encoder_1.keras"
-Bob_decoder_model_path_1 = "Bob_decoder_1.keras"
-Eve_decoder_model_path_1 = "Eve_decoder_1.keras"
+Alice_encoder_model_path_1 = "python_autoencoder/Alice_encoder_1.keras"
+Bob_decoder_model_path_1 = "python_autoencoder/Bob_decoder_1.keras"
+Eve_decoder_model_path_1 = "python_autoencoder/Eve_decoder_1.keras"
 
 Alice_encoder = keras.models.load_model(Alice_encoder_model_path_1)
 Bob_decoder = keras.models.load_model(Bob_decoder_model_path_1)
@@ -63,12 +63,15 @@ Eve_autoencoder.compile(optimizer=optimizer, loss=loss_fn)
 print('autoencoder init done.')
 
 
-def init_kmeans(symM=16, satellites=4, n=100):
+def init_kmeans(innerLen=24, modLen=4, satellites=4):
     '''Initializes equal sized clusters with the whole message set'''
-    inp = np.eye(symM, dtype=int)
+    # input:16*innerLen X:16*1(complex)
+
+    n = 2**modLen
+    inp = np.zeros(n, innerLen)
     unit_codewords = Alice_encoder.predict(inp)
+    X = np.mean(unit_codewords)
     kmeans = KMeans(n_clusters=satellites)
-    X = unit_codewords.reshape(symM, 2 * n)
     kmeans.fit(X)
     centers = kmeans.cluster_centers_
     centers = centers.reshape(-1, 1, X.shape[-1]
@@ -79,13 +82,14 @@ def init_kmeans(symM=16, satellites=4, n=100):
     return kmeans
 
 
-def generate_mat(kmeans_labels, satellites=4, symM=16):
+def generate_mat(kmeans_labels, satellites=4, modLen=4):
     '''Generates the matrix for equalization of the input distribution on Eves side'''
-    gen_matrix = np.zeros((symM, symM))
+    n = 2**modLen
+    gen_matrix = np.zeros((n, n))
     for j in range(satellites):
-        for i in range(symM):
+        for i in range(n):
             if kmeans_labels[i] == j:
-                for k in range(symM):
+                for k in range(n):
                     if kmeans_labels[k] == j:
                         gen_matrix[i, k] = 1/satellites
     gen_mat = tf.cast(gen_matrix, tf.float64)
@@ -93,7 +97,8 @@ def generate_mat(kmeans_labels, satellites=4, symM=16):
 
 
 # 初始化k聚类
-kmeans = init_kmeans(innerLen, modLen, innerLen)
+satellites = 4
+kmeans = init_kmeans(innerLen, modLen, satellites)
 generator_matrix = generate_mat(kmeans.labels_, modLen, innerLen)
 
 # 物理层安全训练

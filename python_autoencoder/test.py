@@ -41,9 +41,9 @@ G = pyldpc.coding_matrix(H)
 print('ldpc init done.')
 
 # 加载已训练模型
-Alice_encoder_model_path_1 = "Alice_encoder_1.keras"
-Bob_decoder_model_path_1 = "Bob_decoder_1.keras"
-Eve_decoder_model_path_1 = "Eve_decoder_1.keras"
+Alice_encoder_model_path_1 = "python_autoencoder/Alice_encoder_1.keras"
+Bob_decoder_model_path_1 = "python_autoencoder/Bob_decoder_1.keras"
+Eve_decoder_model_path_1 = "python_autoencoder/Eve_decoder_1.keras"
 
 Alice_encoder = keras.models.load_model(Alice_encoder_model_path_1)
 Bob_decoder = keras.models.load_model(Bob_decoder_model_path_1)
@@ -101,7 +101,7 @@ for i in range(len(Bob_snr_range)):
         Bob_llr = Bob_Predict.flatten().astype(np.float64)
         for k in range(len(Bob_llr)):
             Bob_llr[k] = utils.llr(Bob_llr[k])
-        Bob_Info = myldpc.decode(H, G, Bob_llr, Bob_test_snr, maxiter=1000)
+        Bob_Info = myldpc.decode(H, G, Bob_llr, Bob_test_snr, maxiter=100)
         Eve_llr = Eve_Predict.flatten().astype(np.float64)
         for k in range(len(Bob_llr)):
             Eve_llr[k] = utils.llr(Eve_llr[k])
