@@ -53,7 +53,7 @@ Eve_decoder = keras.models.load_model(Eve_decoder_model_path_1)
 innerLen = 24
 modLen = 4
 outerLen = innerLen * 2 // modLen
-
+print('autoencoder init done.')
 # 生成测试集
 TestSize = 100
 Bob_snr_range = [-40, -30, -20, -10, 0]
@@ -123,7 +123,7 @@ plt.legend(['Bob_MSE', 'Eve_MSE'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-MSE_fig.savefig('MSE_1.png')
+MSE_fig.savefig('python_autoencoder/MSE_1.png')
 
 SER_fig = plt.figure(figsize=(10, 5))
 plt.semilogy(Bob_snr_range, Bob_SER, "o-")
@@ -134,7 +134,7 @@ plt.legend(['Bob_SER', 'Eve_SER'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-SER_fig.savefig('SER_1.png')
+SER_fig.savefig('python_autoencoder/SER_1.png')
 
 BER_fig = plt.figure(figsize=(10, 5))
 plt.semilogy(Bob_snr_range, Bob_BER, "o-")
@@ -145,4 +145,4 @@ plt.legend(['Bob_BER', 'Eve_BER'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-BER_fig.savefig('BER_1.png')
+BER_fig.savefig('python_autoencoder/BER_1.png')

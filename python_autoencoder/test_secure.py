@@ -41,9 +41,9 @@ G = pyldpc.coding_matrix(H)
 print('ldpc init done.')
 
 # 加载已训练模型
-Alice_encoder_model_path_2 = "Alice_encoder_2.keras"
-Bob_decoder_model_path_2 = "Bob_decoder_2.keras"
-Eve_decoder_model_path_2 = "Eve_decoder_2.keras"
+Alice_encoder_model_path_2 = "python_autoencoder/Alice_encoder_2.keras"
+Bob_decoder_model_path_2 = "python_autoencoder/Bob_decoder_2.keras"
+Eve_decoder_model_path_2 = "python_autoencoder/Eve_decoder_2.keras"
 
 Alice_encoder = keras.models.load_model(Alice_encoder_model_path_2)
 Bob_decoder = keras.models.load_model(Bob_decoder_model_path_2)
@@ -53,7 +53,7 @@ Eve_decoder = keras.models.load_model(Eve_decoder_model_path_2)
 innerLen = 24
 modLen = 4
 outerLen = innerLen * 2 // modLen
-
+print('autoencoder init done.')
 # 生成测试集
 TestSize = 100
 Bob_snr_range = [-40, -30, -20, -10, 0]
@@ -123,7 +123,7 @@ plt.legend(['Bob_MSE', 'Eve_MSE'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-MSE_fig.savefig('MSE_2.png')
+MSE_fig.savefig('python_autoencoder/MSE_2.png')
 
 SER_fig = plt.figure(figsize=(10, 5))
 plt.semilogy(Bob_snr_range, Bob_SER, "o-")
@@ -134,7 +134,7 @@ plt.legend(['Bob_SER', 'Eve_SER'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-SER_fig.savefig('SER_2.png')
+SER_fig.savefig('python_autoencoder/SER_2.png')
 
 BER_fig = plt.figure(figsize=(10, 5))
 plt.semilogy(Bob_snr_range, Bob_BER, "o-")
@@ -145,4 +145,4 @@ plt.legend(['Bob_BER', 'Eve_BER'],
            prop={'size': 14}, loc='upper right')
 plt.grid(True)
 plt.show()
-BER_fig.savefig('BER_2.png')
+BER_fig.savefig('python_autoencoder/BER_2.png')

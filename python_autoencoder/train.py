@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 
 import utils
 
-Alice_encoder_model_path_1 = "Alice_encoder_1.keras"
-Bob_decoder_model_path_1 = "Bob_decoder_1.keras"
-Eve_decoder_model_path_1 = "Eve_decoder_1.keras"
+Alice_encoder_model_path_1 = "python_autoencoder/Alice_encoder_1.keras"
+Bob_decoder_model_path_1 = "python_autoencoder/Bob_decoder_1.keras"
+Eve_decoder_model_path_1 = "python_autoencoder/Eve_decoder_1.keras"
 
 # 初始化Bob和Eve的snr
 Bob_train_snr = 10
@@ -163,4 +163,4 @@ plt.grid(True)
 plt.show()
 
 # 保存损失函数图像
-loss_fig.savefig('loss_1.png')
+loss_fig.savefig('python_autoencoder/loss_1.png')

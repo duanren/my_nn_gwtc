@@ -182,9 +182,9 @@ for epoch in range(nEpochs):
 
 print('autoencoder_2 is trained.')
 # 保存模型
-Alice_encoder_model_path_2 = "Alice_encoder_2.keras"
-Bob_decoder_model_path_2 = "Bob_decoder_2.keras"
-Eve_decoder_model_path_2 = "Eve_decoder_2.keras"
+Alice_encoder_model_path_2 = "python_autoencoder/Alice_encoder_2.keras"
+Bob_decoder_model_path_2 = "python_autoencoder/Bob_decoder_2.keras"
+Eve_decoder_model_path_2 = "python_autoencoder/Eve_decoder_2.keras"
 
 Alice_encoder.save(
     filepath=Alice_encoder_model_path_2, save_format='keras')
@@ -206,4 +206,4 @@ plt.grid(True)
 plt.show()
 
 # 保存损失函数图像
-loss_fig.savefig('loss_2.png')
+loss_fig.savefig('python_autoencoder/loss_2.png')
