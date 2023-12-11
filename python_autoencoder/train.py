@@ -69,7 +69,7 @@ Eve_autoencoder = keras.models.Sequential(
 
 
 def lr_scheduler(epoch, lr):
-    if (epoch + 1) % 50 == 0:
+    if (epoch + 1) % 250 == 0:
         return lr * 0.5  # 每50个epoch学习率减半
     else:
         return lr
@@ -96,7 +96,7 @@ SampleSize = 102400
 SampleData = np.random.randint(0, 2, (SampleSize, innerLen))
 
 # 训练
-nEpochs = 500
+nEpochs = 1500
 BatchSize = 120
 
 print('autoencoder_1 training...')

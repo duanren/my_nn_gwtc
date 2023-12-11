@@ -56,8 +56,8 @@ outerLen = innerLen * 2 // modLen
 print('autoencoder init done.')
 # 生成测试集
 TestSize = 100
-Bob_snr_range = [-40, -30, -20, -10, 0]
-Eve_snr_range = [-20, -10, 0, 10, 20]
+Bob_snr_range = [-50,-30,-10,10, 30, 50]
+Eve_snr_range = [-50,-30,-10,10, 30, 50]
 Bob_BER = np.zeros(len(Bob_snr_range))
 Eve_BER = np.zeros(len(Bob_snr_range))
 Bob_SER = np.zeros(len(Bob_snr_range))

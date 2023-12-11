@@ -56,8 +56,8 @@ outerLen = innerLen * 2 // modLen
 print('autoencoder init done.')
 # 生成测试集
 TestSize = 100
-Bob_snr_range = [-40, -30, -20, -10, 0]
-Eve_snr_range = [-20, -10, 0, 10, 20]
+Bob_snr_range = [-50,-30,-10,10, 30, 50]
+Eve_snr_range = [-50,-30,-10,10, 30, 50]
 Bob_BER = np.zeros(len(Bob_snr_range))
 Eve_BER = np.zeros(len(Bob_snr_range))
 Bob_SER = np.zeros(len(Bob_snr_range))
@@ -101,7 +101,7 @@ for i in range(len(Bob_snr_range)):
         Bob_llr = Bob_Predict.flatten().astype(np.float64)
         for k in range(len(Bob_llr)):
             Bob_llr[k] = utils.llr(Bob_llr[k])
-        Bob_Info = myldpc.decode(H, G, Bob_llr, Bob_test_snr, maxiter=100)
+        Bob_Info = myldpc.decode(H, G, Bob_llr, Bob_test_snr, maxiter=1000)
         Eve_llr = Eve_Predict.flatten().astype(np.float64)
         for k in range(len(Bob_llr)):
             Eve_llr[k] = utils.llr(Eve_llr[k])
